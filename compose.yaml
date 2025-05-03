@@ -1,0 +1,5 @@
+services:
+  server:
+    build: server
+    ports:
+      - ${HTTP_PORT}:80

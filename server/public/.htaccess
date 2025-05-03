@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_URI} ^/mcp$
+RewriteRule ^mcp$ mcp.php [L]
