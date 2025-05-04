@@ -87,7 +87,7 @@ function getSunriseTime(float $latitude, float $longitude, ?string $date = null)
     } else if ($sunriseTime === true) {
         $text = '1日中日が昇ったままです（白夜）。';
     } else {
-        $text = '日の出時刻は' . date('H:i', $sunriseTime) . 'です。';
+        $text = '日の出時刻は' . date('H:i', $sunriseTime) . '（UTC）です。';
     }
 
     return [
