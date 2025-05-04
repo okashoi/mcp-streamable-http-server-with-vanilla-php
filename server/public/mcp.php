@@ -44,7 +44,7 @@ function listTools(): array
         'tools' => [
             [
                 'name' => 'get_sunrise_time',
-                'description' => '与えらた地点の緯度経度と日付から、その地点の日の出時刻を取得します。',
+                'description' => '与えらた地点の緯度経度と日付から、その地点の日の出時刻をUTCで取得します。',
                 'inputSchema' => [
                     'type' => 'object',
                     'properties' => [
