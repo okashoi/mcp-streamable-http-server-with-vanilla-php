@@ -10,7 +10,7 @@ $data = match ($parsedBody['method']) {
     'tools/call' => getSunriseTime(
         (float)$parsedBody['params']['arguments']['latitude'],
         (float)$parsedBody['params']['arguments']['longitude'],
-        $parsedBody['params']['date'] ?? null,
+        $parsedBody['params']['arguments']['date'] ?? null,
     ),
 };
 
