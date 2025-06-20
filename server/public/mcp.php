@@ -1,23 +1,49 @@
 <?php
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Method not allowed. Only POST requests are supported.']);
+    exit();
+}
+
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if (strpos($contentType, 'application/json') === false) {
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Content-Type must be application/json']);
+    exit();
+}
+
 $requestBody = file_get_contents('php://input');
 $parsedBody = json_decode($requestBody, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid JSON: ' . json_last_error_msg()]);
+    exit();
+}
+
+if (!isset($parsedBody['method'])) {
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Missing required field: method']);
+    exit();
+}
 
 $data = match ($parsedBody['method']) {
     'initialize' => getInitialInfo(),
     'notifications/initialized' => http_response_code(202) && exit(),
     'tools/list' => listTools(),
-    'tools/call' => getSunriseTime(
-        (float)$parsedBody['params']['arguments']['latitude'],
-        (float)$parsedBody['params']['arguments']['longitude'],
-        $parsedBody['params']['arguments']['date'] ?? null,
-    ),
+    'tools/call' => getSunriseTime($parsedBody),
+    default => handleUnknownMethod($parsedBody['method'])
 };
 
 header('Content-Type: application/json');
 echo json_encode([
     'jsonrpc' => '2.0',
-    'id' => $parsedBody['id'],
+    'id' => $parsedBody['id'] ?? null,
     'result' => $data,
 ]);
 exit();
@@ -68,8 +94,23 @@ function listTools(): array
     ];
 }
 
-function getSunriseTime(float $latitude, float $longitude, ?string $date = null): array
+function getSunriseTime(array $parsedBody): array
 {
+    if (!isset($parsedBody['params']['arguments']['latitude']) || 
+        !isset($parsedBody['params']['arguments']['longitude'])) {
+        return [
+            'content' => [[
+                'type' => 'text',
+                'text' => 'Missing required parameters: latitude and longitude',
+            ]],
+            'isError' => true,
+        ];
+    }
+
+    $latitude = (float)$parsedBody['params']['arguments']['latitude'];
+    $longitude = (float)$parsedBody['params']['arguments']['longitude'];
+    $date = $parsedBody['params']['arguments']['date'] ?? null;
+
     $timestamp = $date ? strtotime($date) : time();
     if ($timestamp === false) {
         return [
@@ -96,5 +137,16 @@ function getSunriseTime(float $latitude, float $longitude, ?string $date = null)
             'text' => $text,
         ]],
         'isError' => false,
+    ];
+}
+
+function handleUnknownMethod(string $method): array
+{
+    return [
+        'content' => [[
+            'type' => 'text',
+            'text' => "Unknown method: $method",
+        ]],
+        'isError' => true,
     ];
 }
